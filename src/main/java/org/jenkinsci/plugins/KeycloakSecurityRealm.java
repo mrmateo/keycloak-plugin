@@ -26,6 +26,7 @@ THE SOFTWARE.
  */
 package org.jenkinsci.plugins;
 
+import java.util.Objects;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -40,7 +41,6 @@ import javax.servlet.http.HttpServletRequest;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jenkins.security.SecurityListener;
-import org.apache.commons.lang.StringUtils;
 import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.adapters.AdapterDeploymentContext;
@@ -130,7 +130,7 @@ public class KeycloakSecurityRealm extends SecurityRealm {
 	@DataBoundConstructor
 	public KeycloakSecurityRealm(String keycloakIdp, String keycloakJson, boolean keycloakValidate, boolean keycloakRespectAccessTokenTimeout) throws IOException {
 		super();
-		if (StringUtils.isEmpty(keycloakJson)) {
+		if (keycloakJson == null || keycloakJson.isEmpty()) {
 			throw new IllegalArgumentException("Keycloak JSON is a mandatory item.");
 		}
 		setKeycloakIdp(keycloakIdp);
@@ -325,13 +325,13 @@ public class KeycloakSecurityRealm extends SecurityRealm {
 	}
 
 	private void checkState(String queryState, Object sessionStateObj) {
-		if (StringUtils.isEmpty(queryState) || sessionStateObj == null) {
+		if (queryState == null || queryState.isEmpty() || sessionStateObj == null) {
 			LOGGER.log(Level.WARNING, "Cannot validate incoming authentication attempt due to state not being found. State from query: "
 				+ queryState + " State from session: " + sessionStateObj);
 			throw new AuthenticationServiceException("Could not validate state token during authentication.");
 		}
 		String sessionState = sessionStateObj.toString();
-		if (StringUtils.equals(queryState, sessionState)) {
+		if (Objects.equals(queryState, sessionState)) {
 			LOGGER.log(Level.FINE, "State cookie matches parameter value.");
 		} else {
 			LOGGER.log(Level.WARNING, "State session value (" + sessionState + ") did NOT match parameter value (" + queryState + ")");
@@ -410,7 +410,7 @@ public class KeycloakSecurityRealm extends SecurityRealm {
 		*/
 		public FormValidation doCheckKeycloakJson(@QueryParameter String value) throws ServletException {
 			try {
-				if (StringUtils.isNotEmpty(value)) {
+				if (value != null && !value.isEmpty()) {
 					JsonSerialization.readValue(value, AdapterConfig.class);
 				} else {
 					return FormValidation.error("Keycloak JSON is required.");
