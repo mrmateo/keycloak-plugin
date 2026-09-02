@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins;
 
+import hudson.util.FormValidation;
 import io.jenkins.plugins.casc.ConfigurationContext;
 import io.jenkins.plugins.casc.ConfiguratorRegistry;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
@@ -17,6 +18,43 @@ import static org.junit.Assert.*;
 public class KeycloakSecurityRealmTest {
     @Rule
     public JenkinsConfiguredWithCodeRule chain = new JenkinsConfiguredWithCodeRule();
+
+
+	private static final String VALID_KEYCLOAK_JSON =
+		"""
+			{
+			  "realm": "realm",
+			  "auth-server-url": "https://www.example.com/",
+			  "ssl-required": "external",
+			  "resource": "jenkins",
+			  "credentials": {
+			    "secret": "1234oxa3"
+			  },
+			  "confidential-port": 0
+			}
+		""";
+
+
+	@Test
+	public void keycloakJsonValidation() throws Exception {
+		KeycloakSecurityRealm.DescriptorImpl descriptor =
+			chain.jenkins.getDescriptorByType(
+				KeycloakSecurityRealm.DescriptorImpl.class);
+
+		assertEquals(
+			FormValidation.Kind.OK,
+			descriptor.doCheckKeycloakJson(
+				VALID_KEYCLOAK_JSON).kind);
+
+		assertEquals(
+			FormValidation.Kind.ERROR,
+			descriptor.doCheckKeycloakJson(
+				"{ not valid keycloak json }").kind);
+
+		assertEquals(
+			FormValidation.Kind.ERROR,
+			descriptor.doCheckKeycloakJson("").kind);
+	}
 
     @Test
     @ConfiguredWithCode("casc.yaml")
