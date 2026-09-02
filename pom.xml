@@ -37,8 +37,8 @@
 		-->
 		<keycloak.authz.client.version>${keycloak.version}</keycloak.authz.client.version>
 		<!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-		<jenkins.baseline>2.504</jenkins.baseline>
-		<jenkins.version>2.539</jenkins.version>
+		<jenkins.baseline>2.541</jenkins.baseline>
+		<jenkins.version>2.541.3</jenkins.version>
 		<hpi.compatibleSinceVersion>2.3.1</hpi.compatibleSinceVersion>
 		<ban-commons-lang-2.skip>false</ban-commons-lang-2.skip>
 	</properties>
@@ -79,7 +79,7 @@
 			<dependency>
 				<groupId>io.jenkins.tools.bom</groupId>
 				<artifactId>bom-${jenkins.baseline}.x</artifactId>
-				<version>5681.v79d2ddf61465</version>
+				<version>6931.vea_a_b_c6fd017d</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
