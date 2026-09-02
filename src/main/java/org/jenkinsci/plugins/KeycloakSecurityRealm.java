@@ -67,6 +67,7 @@ import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.StaplerResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -409,23 +410,35 @@ public class KeycloakSecurityRealm extends SecurityRealm {
 		 * @throws ServletException 
 		*/
 		public FormValidation doCheckKeycloakJson(@QueryParameter String value) throws ServletException {
-			try {
-				if (value != null && !value.isEmpty()) {
-					JsonSerialization.readValue(value, AdapterConfig.class);
-				} else {
-					return FormValidation.error("Keycloak JSON is required.");
-				}
-			} catch (IOException ex) {
+			if (isKeycloakJsonValid(value)) {
+				return FormValidation.ok();
+			} else {
 				return FormValidation.error("Issue parsing keycloak adapter json. JSON does not appear valid.");
 			}
-			return FormValidation.ok();
+		}
+
+		private boolean isKeycloakJsonValid(String keycloakJson) {
+			if (keycloakJson == null || keycloakJson.isEmpty()) {
+				return false;
+			}
+			try {
+				JsonSerialization.readValue(keycloakJson, AdapterConfig.class);
+			} catch (IOException ex) {
+				return false;
+			}
+			return true;
 		}
 
 		@Override
-		public SecurityRealm newInstance(StaplerRequest request, JSONObject formData) throws FormException {
-			JSONObject keycloakJson = formData.getJSONObject("keycloak").getJSONObject("keycloakJson");
-			if (keycloakJson.isNullObject() || keycloakJson.isEmpty()) {
+		public SecurityRealm newInstance(StaplerRequest2 request, JSONObject formData) throws FormException {
+			String keycloakJson = formData.optString("keycloakJson");
+			if (keycloakJson.isEmpty()) {
 				throw new Descriptor.FormException("Keycloak JSON is required.", "keycloakJson");
+			}
+
+			// final json check before saving as a new instance
+			if (!isKeycloakJsonValid(keycloakJson)) {
+				throw new Descriptor.FormException("Keycloak JSON did not validate.", "keycloakJson");
 			}
 			return super.newInstance(request, formData);
 		}
