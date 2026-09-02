@@ -28,8 +28,14 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<keycloak.version>25.0.3</keycloak.version>
-		<!-- authz client on own release schedule -->
-		<keycloak.authz.client.version>26.0.7</keycloak.authz.client.version>
+		<!--
+			Kept in lock-step with keycloak.version. keycloak-authz-client 26.x ships
+			its own org.keycloak.common.crypto.CryptoProvider (AuthzClientCryptoProvider)
+			which collides with keycloak-crypto-default's DefaultCryptoProvider, making
+			CryptoIntegration.detectProvider() throw
+			"Multiple crypto providers loaded" when the deployment is built.
+		-->
+		<keycloak.authz.client.version>${keycloak.version}</keycloak.authz.client.version>
 		<!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
 		<jenkins.baseline>2.504</jenkins.baseline>
 		<jenkins.version>2.539</jenkins.version>
@@ -157,6 +163,33 @@
 			<groupId>org.keycloak</groupId>
 			<artifactId>keycloak-adapter-spi</artifactId>
 			<version>${keycloak.version}</version>
+		</dependency>
+		<!--
+			keycloak-adapter-core's KeycloakDeployment references
+			org.keycloak.adapters.authorization.PolicyEnforcer, which lives in this
+			separate artifact. Without it Jenkins/Stapler fails to reflect over the
+			security realm (NoClassDefFoundError: org/keycloak/adapters/authorization/PolicyEnforcer)
+			while rendering the login page.
+		-->
+		<dependency>
+			<groupId>org.keycloak</groupId>
+			<artifactId>keycloak-policy-enforcer</artifactId>
+			<version>${keycloak.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.wildfly.security</groupId>
+					<artifactId>wildfly-elytron-http-oidc</artifactId>
+				</exclusion>
+				<!-- provided by jackson2-api-->
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-databind</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-core</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins</groupId>
