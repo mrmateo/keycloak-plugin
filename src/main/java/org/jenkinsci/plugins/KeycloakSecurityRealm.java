@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.Util;
 import jenkins.security.SecurityListener;
 import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.OAuth2Constants;
@@ -182,7 +183,10 @@ public class KeycloakSecurityRealm extends SecurityRealm {
 	 */
 	public HttpResponse doCommenceLogin(StaplerRequest request, StaplerResponse response,
 			@Header("Referer") final String referer) throws IOException {
-		request.getSession().setAttribute(REFERER_ATTRIBUTE, referer);
+
+		if (referer != null && Util.isSafeToRedirectTo(referer)) {
+			request.getSession().setAttribute(REFERER_ATTRIBUTE, referer);
+		}
 
 		String scopeParam = TokenUtil.attachOIDCScope(null);
 		String redirect = redirectUrl(request);
@@ -318,7 +322,7 @@ public class KeycloakSecurityRealm extends SecurityRealm {
 		}
 
 		String referer = (String) request.getSession().getAttribute(REFERER_ATTRIBUTE);
-		if (referer != null) {
+		if (referer != null && Util.isSafeToRedirectTo(referer)) {
 			LOGGER.log(Level.FINEST, "Redirecting to " + referer);
 			return HttpResponses.redirectTo(referer);
 		}
