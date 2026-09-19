@@ -34,6 +34,19 @@ public class KeycloakSecurityRealmTest {
 			}
 		""";
 
+	@Test
+	public void verifyValidRefererCheck() {
+		final Jenkins jenkins = Jenkins.get();
+		KeycloakSecurityRealm ksr = new KeycloakSecurityRealm();
+		String goodRelativeURL = "/job/TEST%20FOLDER/";
+		String goodAbsoluteURL = jenkins.getRootUrl() + goodRelativeURL;
+		String badURL = "https://badsite.com/openredirect";
+		assertTrue(ksr.isURLValidRedirect(goodRelativeURL));
+		assertTrue(ksr.isURLValidRedirect(goodAbsoluteURL));
+		assertFalse(ksr.isURLValidRedirect(badURL));
+		assertFalse(ksr.isURLValidRedirect(null));
+		assertFalse(ksr.isURLValidRedirect(""));
+	}
 
 	@Test
 	public void keycloakJsonValidation() throws Exception {
