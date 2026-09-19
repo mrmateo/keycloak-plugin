@@ -41,6 +41,7 @@ import javax.servlet.http.HttpServletRequest;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Util;
+import jenkins.model.Jenkins;
 import jenkins.security.SecurityListener;
 import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.OAuth2Constants;
@@ -184,7 +185,7 @@ public class KeycloakSecurityRealm extends SecurityRealm {
 	public HttpResponse doCommenceLogin(StaplerRequest request, StaplerResponse response,
 			@Header("Referer") final String referer) throws IOException {
 
-		if (referer != null && Util.isSafeToRedirectTo(referer)) {
+		if (isURLValidRedirect(referer)) {
 			request.getSession().setAttribute(REFERER_ATTRIBUTE, referer);
 		}
 
@@ -209,6 +210,14 @@ public class KeycloakSecurityRealm extends SecurityRealm {
 		createFilter();
 		return new HttpRedirect(authUrl);
 
+	}
+
+	protected boolean isURLValidRedirect(String redirectURL) {
+		if (redirectURL == null || redirectURL.isEmpty()) {
+			return false;
+		}
+		String jenkinsRootURL = Jenkins.get().getRootUrl();
+		return (jenkinsRootURL != null && redirectURL.startsWith(jenkinsRootURL)) || Util.isSafeToRedirectTo(redirectURL);
 	}
 
 	private String redirectUrl(StaplerRequest request) {
@@ -322,7 +331,7 @@ public class KeycloakSecurityRealm extends SecurityRealm {
 		}
 
 		String referer = (String) request.getSession().getAttribute(REFERER_ATTRIBUTE);
-		if (referer != null && Util.isSafeToRedirectTo(referer)) {
+		if (isURLValidRedirect(referer)) {
 			LOGGER.log(Level.FINEST, "Redirecting to " + referer);
 			return HttpResponses.redirectTo(referer);
 		}
